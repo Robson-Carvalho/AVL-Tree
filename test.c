@@ -8,6 +8,21 @@ typedef struct node
   int height;
 } node;
 
+// Funções de árvore AVL
+node *createNode(int value);
+short bigger(short leftHeight, short rightHeight);
+short nodeHeight(node *nodeParam);
+short balanceFactor(node *nodeParam);
+node *leftRotation(node *nodeParam);
+node *rightRotation(node *nodeParam);
+node *rightLeftRotation(node *nodeParam);
+node *leftRightRotation(node *nodeParam);
+node *balance(node *root);
+node *insert(node *root, int value);
+node *removeNode(node *root, int key);
+void freeTree(node *root);
+void printTree(node *root, int space);
+
 // criando uma nova folha
 node *createNode(int value)
 {
@@ -101,6 +116,31 @@ node *leftRightRotation(node *nodeParam)
   return rightRotation(nodeParam);
 }
 
+// verificar a necessidade balancear, escolhendo uma das quatro situações possíveis
+node *balance(node *root)
+{
+  short fb = balanceFactor(root);
+
+  if (fb > 1 && balanceFactor(root->right) >= 0)
+  {
+    root = leftRotation(root);
+  }
+  else if (fb < -1 && balanceFactor(root->left) <= 0)
+  {
+    root = rightRotation(root);
+  }
+  else if (fb < -1 && balanceFactor(root->left) > 0)
+  {
+    root = leftRightRotation(root);
+  }
+  else if (fb > 1 && balanceFactor(root->right) < 0)
+  {
+    root = rightLeftRotation(root);
+  }
+
+  return root;
+}
+
 // inserção
 node *insert(node *root, int value)
 {
@@ -120,40 +160,15 @@ node *insert(node *root, int value)
     return createNode(value);
   }
 
-  root->height = bigger(nodeHeight(root->left), nodeHeight(root->right));
+  root->height = bigger(nodeHeight(root->left), nodeHeight(root->right)) + 1;
 
   root = balance(root);
 
   return root;
 }
 
-// verificar a necessidade balancear, escolhendo uma das quatro situações possíveis
-node *balance(node *root)
-{
-  short fb = balanceFactor(root);
-
-  if (fb < -1 && balanceFactor(root->right) >= 0)
-  {
-    root = leftRotation(root);
-  }
-  else if (fb < -1 && balanceFactor(root->left) <= 0)
-  {
-    root = rightRotation(root);
-  }
-  else if (fb < -1 && balanceFactor(root->left) > 0)
-  {
-    root = leftRightRotation(root);
-  }
-  else if (fb < -1 && balanceFactor(root->right) < 0)
-  {
-    root = rightLeftRotation(root);
-  }
-
-  return root;
-}
-
 // remover um nó
-node *remove(node *root, int key)
+node *removeNode(node *root, int key)
 {
   if (!root)
   {
@@ -183,7 +198,7 @@ node *remove(node *root, int key)
           root->value = aux->value;
           aux->value = key;
 
-          root->left = remove(root->left, key);
+          root->left = removeNode(root->left, key);
           return root;
         }
         else
@@ -207,15 +222,15 @@ node *remove(node *root, int key)
     {
       if (key < root->value)
       {
-        root->left = remove(root->left, key);
+        root->left = removeNode(root->left, key);
       }
       else
       {
-        root->right = remove(root->right, key);
+        root->right = removeNode(root->right, key);
       }
     }
 
-    root->height = bigger(nodeHeight(root->left), nodeHeight(root->right));
+    root->height = bigger(nodeHeight(root->left), nodeHeight(root->right)) + 1;
 
     root = balance(root);
 
@@ -230,10 +245,11 @@ void freeTree(node *root)
   {
     freeTree(root->left);
     freeTree(root->right);
-    remove(root, root->value);
+    free(root);
   }
 }
 
+// imprime a árvore
 void printTree(node *root, int space)
 {
   if (root == NULL)
@@ -277,7 +293,7 @@ int main()
     case 2:
       printf("Digite o valor para remover: ");
       scanf("%d", &value);
-      root = remove(root, value);
+      root = removeNode(root, value);
       break;
     case 3:
       printf("Árvore AVL:\n");
